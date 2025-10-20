@@ -1,0 +1,11 @@
+Area,Population,Temperature,Waste_Collected_kg_per_day
+Chashara,85000,32,4200
+Fatullah,120000,33,5900
+Siddhirganj,95000,31,4700
+Tanbazar,60000,34,3000
+Nitaiganj,50000,32,2600
+Pagla,75000,33,3700
+Enayetnagar,68000,31,3400
+Shanarpar,70000,32,3500
+Godnail,82000,33,4100
+Deobhog,65000,30,3200

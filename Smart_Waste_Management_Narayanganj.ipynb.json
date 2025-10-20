@@ -1,0 +1,289 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "id": "471c4ebb",
+   "metadata": {},
+   "source": [
+    "# Smart Waste Management System — Narayanganj\n",
+    "\n",
+    "Author: **Diprazz**\n",
+    "\n",
+    "This notebook walks through a complete intermediate-level data science project: data collection (sample), exploratory data analysis, model training, evaluation, and a simple prediction interface for a Smart Waste Management System tailored to Narayanganj."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "3c61181b",
+   "metadata": {},
+   "source": [
+    "## 0) Requirements\n",
+    "\n",
+    "Run this notebook in Jupyter or Google Colab. If running locally, make sure the following libraries are installed:\n",
+    "\n",
+    "```bash\n",
+    "pip install numpy pandas matplotlib seaborn scikit-learn joblib\n",
+    "```"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "8c6d44a3",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import pandas as pd\n",
+    "import numpy as np\n",
+    "import matplotlib.pyplot as plt\n",
+    "import seaborn as sns\n",
+    "from sklearn.model_selection import train_test_split\n",
+    "from sklearn.linear_model import LinearRegression\n",
+    "from sklearn.ensemble import RandomForestRegressor\n",
+    "from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score\n",
+    "import joblib\n",
+    "import os\n",
+    "from pathlib import Path\n",
+    "\n",
+    "# Create folders\n",
+    "Path('data').mkdir(exist_ok=True)\n",
+    "Path('models').mkdir(exist_ok=True)\n",
+    "\n",
+    "plt.style.use('default')\n",
+    "%matplotlib inline"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "9fbb953f",
+   "metadata": {},
+   "source": [
+    "## 1) Load dataset\n",
+    "\n",
+    "Loading Narayanganj waste management data"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "888000b4",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df = pd.read_csv('data/narayanganj_waste.csv')\n",
+    "print(f\"Dataset loaded: {df.shape[0]} areas, {df.shape[1]} features\")\n",
+    "df.head()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "430c0c07",
+   "metadata": {},
+   "source": [
+    "## 2) Exploratory Data Analysis (EDA)\n",
+    "\n",
+    "We inspect basic statistics, correlations, and visualize relationships."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "0f5c3745",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "print(\"📊 Basic Statistics:\")\n",
+    "df.describe()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "e8c7e059",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "plt.figure(figsize=(8,5))\n",
+    "sns.heatmap(df.corr(), annot=True, cmap='YlGnBu')\n",
+    "plt.title('Correlation Matrix')\n",
+    "plt.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "3e808960",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "plt.figure(figsize=(10,5))\n",
+    "sns.barplot(x='Area', y='Waste_Collected_kg_per_day', data=df)\n",
+    "plt.xticks(rotation=45)\n",
+    "plt.title('Daily Waste Collected by Area')\n",
+    "plt.tight_layout()\n",
+    "plt.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "5d13dd26",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "plt.figure(figsize=(7,5))\n",
+    "sns.scatterplot(x='Population', y='Waste_Collected_kg_per_day', data=df)\n",
+    "plt.title('Population vs Waste Collected')\n",
+    "plt.show()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "23c8c165",
+   "metadata": {},
+   "source": [
+    "## 3) Feature selection & Model Training\n",
+    "\n",
+    "We'll train two models (Linear Regression and Random Forest) and compare their performance."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "4678a818",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "X = df[['Population', 'Temperature']]\n",
+    "y = df['Waste_Collected_kg_per_day']\n",
+    "\n",
+    "# Train-test split\n",
+    "X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)\n",
+    "\n",
+    "# Linear Regression\n",
+    "lr = LinearRegression()\n",
+    "lr.fit(X_train, y_train)\n",
+    "y_pred_lr = lr.predict(X_test)\n",
+    "\n",
+    "# Random Forest\n",
+    "rf = RandomForestRegressor(n_estimators=100, random_state=42)\n",
+    "rf.fit(X_train, y_train)\n",
+    "y_pred_rf = rf.predict(X_test)\n",
+    "\n",
+    "# Evaluation function\n",
+    "def eval_model(y_true, y_pred):\n",
+    "    return {\n",
+    "        'MAE': mean_absolute_error(y_true, y_pred),\n",
+    "        'RMSE': mean_squared_error(y_true, y_pred, squared=False),\n",
+    "        'R2': r2_score(y_true, y_pred)\n",
+    "    }\n",
+    "\n",
+    "results_lr = eval_model(y_test, y_pred_lr)\n",
+    "results_rf = eval_model(y_test, y_pred_rf)\n",
+    "\n",
+    "results = pd.DataFrame([results_lr, results_rf], index=['LinearRegression','RandomForest'])\n",
+    "print(\"📈 Model Performance:\")\n",
+    "results"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "3f68511c",
+   "metadata": {},
+   "source": [
+    "## 4) Save best model\n",
+    "\n",
+    "Choose the best model and save it for later use."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "83f23c3a",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Pick the better model and save\n",
+    "best_model = rf if results.loc['RandomForest','R2'] >= results.loc['LinearRegression','R2'] else lr\n",
+    "joblib.dump(best_model, 'models/waste_model_narayanganj.pkl')\n",
+    "print('✅ Model saved to models/waste_model_narayanganj.pkl')"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "15120e36",
+   "metadata": {},
+   "source": [
+    "## 5) Use the saved model to predict\n",
+    "\n",
+    "Try predicting waste for a hypothetical area"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "d1fcbc56",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "model = joblib.load('models/waste_model_narayanganj.pkl')\n",
+    "# Example prediction\n",
+    "test_input = np.array([[90000, 32]])\n",
+    "pred = model.predict(test_input)\n",
+    "print(f'🎯 Predicted daily waste for population=90000 and temp=32°C: {pred[0]:.2f} kg')"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "2a20d94b",
+   "metadata": {},
+   "source": [
+    "## 6) Actual vs Predicted (Test set)\n",
+    "\n",
+    "Visual comparison of how predictions match actual values."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "e08ae77c",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "y_test_list = list(y_test)\n",
+    "idx = list(range(len(y_test_list)))\n",
+    "plt.figure(figsize=(7,5))\n",
+    "plt.scatter(idx, y_test_list, label='Actual')\n",
+    "plt.scatter(idx, y_pred_rf, label='Predicted (RF)')\n",
+    "plt.legend()\n",
+    "plt.xlabel('Sample index')\n",
+    "plt.ylabel('Waste (kg/day)')\n",
+    "plt.title('Actual vs Predicted (Random Forest)')\n",
+    "plt.show()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "c3171b8a",
+   "metadata": {},
+   "source": [
+    "## 7) Project Summary\n",
+    "\n",
+    "This project successfully demonstrates waste prediction for Narayanganj areas using machine learning."
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "name": "python",
+   "version": "3.x"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}

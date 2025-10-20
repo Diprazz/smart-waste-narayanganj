@@ -1,0 +1,52 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# Machine Learning models
+*.pkl
+*.pickle
+*.joblib
+*.model
+models/
+
+# Dataset files (optional - remove if you want to upload data)
+data/raw/
+data/processed/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Package files
+*.egg
+*.egg-info/
+dist/
+build/
