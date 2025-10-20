@@ -1,14 +1,16 @@
-# 🗑️ Smart Waste Management System - Narayanganj
+# Smart Waste Management System - Narayanganj
 
 A data science project predicting daily waste collection in Narayanganj using machine learning.
 
 ## 📊 Project Overview
+
 - Predictive modeling for waste collection across 10 areas in Narayanganj
 - Multiple ML algorithms comparison (Linear Regression, Random Forest)
 - Data analysis and visualization
 - Model performance evaluation
 
 ## 🚀 Features
+
 - Exploratory Data Analysis (EDA)
 - Machine Learning model training and comparison
 - Prediction interface
