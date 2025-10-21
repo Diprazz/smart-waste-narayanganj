@@ -24,6 +24,8 @@ pip install -r requirements.txt
 
 # Run Jupyter notebook
 jupyter notebook notebooks/Smart_Waste_Management_Narayanganj.ipynb
+```
+
 ## 🌐 Web Application
 
 Run the interactive web application:
