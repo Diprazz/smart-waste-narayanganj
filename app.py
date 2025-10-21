@@ -1,12 +1,10 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import joblib
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_absolute_error, r2_score
+from sklearn.metrics import r2_score
 
 # App configuration
 st.set_page_config(
@@ -38,6 +36,22 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
+
+@st.cache_data
+def load_data():
+    return pd.read_csv('data/narayanganj_waste.csv')
+
+@st.cache_resource
+def load_or_train_model():
+    try:
+        return joblib.load('models/waste_model_narayanganj.pkl')
+    except FileNotFoundError:
+        df = load_data()
+        X = df[['Population', 'Temperature']]
+        y = df['Waste_Collected_kg_per_day']
+        model = RandomForestRegressor(n_estimators=200, random_state=42)
+        model.fit(X, y)
+        return model
 
 def main():
     # Header
@@ -77,14 +91,22 @@ def show_home():
     3. Check **Model Details** for technical information
     """)
     
-    # Quick stats
+    # Quick stats (dynamic)
+    df = load_data()
+    areas_count = len(df)
+    model = load_or_train_model()
+    X = df[['Population', 'Temperature']]
+    y = df['Waste_Collected_kg_per_day']
+    y_pred = model.predict(X)
+    r2 = r2_score(y, y_pred)
+
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.metric("Areas Analyzed", "10", "Narayanganj")
+        st.metric("Areas Analyzed", f"{areas_count}")
     with col2:
-        st.metric("Model Accuracy", "R² > 0.85", "High")
+        st.metric("Model R² (in-sample)", f"{r2:.2f}")
     with col3:
-        st.metric("Data Points", "10 areas", "Complete")
+        st.metric("Total Population", f"{df['Population'].sum():,}")
 
 def show_prediction():
     st.header("🔮 Waste Collection Predictor")
@@ -113,7 +135,7 @@ def show_prediction():
     if st.button("🚀 Predict Waste Collection", use_container_width=True):
         try:
             # Load model and make prediction
-            model = joblib.load('models/waste_model_narayanganj.pkl')
+            model = load_or_train_model()
             prediction = model.predict([[population, temperature]])[0]
             
             # Adjust prediction based on area type
@@ -157,7 +179,7 @@ def show_analysis():
     
     try:
         # Load data
-        df = pd.read_csv('data/narayanganj_waste.csv')
+        df = load_data()
         
         # Overview
         st.subheader("Dataset Overview")
@@ -236,21 +258,20 @@ def show_model_details():
     - **Cross-Validation**: 3-fold
     """)
     
-    # Feature importance (if model exists)
-    try:
-        model = joblib.load('models/waste_model_narayanganj.pkl')
-        if hasattr(model, 'feature_importances_'):
-            st.subheader("🎯 Feature Importance")
-            features = ['Population', 'Temperature']
-            importance = model.feature_importances_
-            
-            fig, ax = plt.subplots(figsize=(8, 4))
-            sns.barplot(x=importance, y=features, palette='rocket', ax=ax)
-            ax.set_xlabel('Feature Importance')
-            ax.set_title('Relative Importance of Features in Prediction')
-            st.pyplot(fig)
-    except:
-        st.info("🔍 Train the model using the notebook to see feature importance")
+    # Feature importance (if available)
+    model = load_or_train_model()
+    if hasattr(model, 'feature_importances_'):
+        st.subheader("🎯 Feature Importance")
+        features = ['Population', 'Temperature']
+        importance = model.feature_importances_
+        
+        fig, ax = plt.subplots(figsize=(8, 4))
+        sns.barplot(x=importance, y=features, palette='rocket', ax=ax)
+        ax.set_xlabel('Feature Importance')
+        ax.set_title('Relative Importance of Features in Prediction')
+        st.pyplot(fig)
+    else:
+        st.info("Feature importance not available for this model.")
     
     st.markdown("""
     ### 🎯 Business Impact
